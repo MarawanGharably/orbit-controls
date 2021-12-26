@@ -4,7 +4,10 @@ import * as THREE from 'three'
 import { PointerLockControls } from './PointerLockControls'
 import floorImage from './images/floor2.jpg'
 import wallImage from './images/wall.jpg'
+import tShirt from './images/moko2.glb'
 import './App.css';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
 
 const createStore = () => {
   
@@ -63,6 +66,7 @@ let moveRight = false;
 let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
+const mouse = new THREE.Vector2();
 
 const onKeyDown = function ( event ) {
 
@@ -118,6 +122,21 @@ const onKeyUp = function ( event ) {
   }
 };
 
+const createObject = () => {
+
+  const geometry = new THREE.SphereGeometry(1, 32, 16);
+  const material = new THREE.MeshNormalMaterial();
+  const newObject = new THREE.Mesh(geometry, material);
+  return newObject;
+}
+
+function onMouseMove( event ) {
+
+	mouse.x = ( event.clientX / document.body.innerWidth ) * 2 - 1;
+	mouse.y = - ( event.clientY / document.body.innerHeight ) * 2 + 1;
+
+}
+
 export default class App extends Component {
 
   componentDidMount(){
@@ -127,15 +146,21 @@ export default class App extends Component {
     const renderer = new THREE.WebGLRenderer({
         canvas : canvas,
     });
-    renderer.setSize(800, 600);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-    scene.add( new THREE.AmbientLight( 0xffffff ));
+    const light = new THREE.SpotLight( 'red', 1 );
+    light.angle = Math.PI / 6;
+    light.position.set(0, 5, 0);
+    scene.add(light);
+    scene.add(light.target);
 
-    const camera = new THREE.PerspectiveCamera(50, 4/3, 0.1, 1000);
+    scene.add( new THREE.AmbientLight( 0xffffff, 0.7 ));
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
     camera.position.y = 1.5;
 
     const controls = new PointerLockControls( camera, canvas );
-    const raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+    const raycaster = new THREE.Raycaster( );
 
     canvas.addEventListener( 'click', function () {controls.lock();} );
     document.addEventListener( 'keydown', onKeyDown );
@@ -144,19 +169,37 @@ export default class App extends Component {
     scene.add( controls.getObject() );
 
     const newStore = createStore();
+    const player = createObject()
     scene.add(newStore);
-    
+    scene.add(player);
+    player.position.copy(camera.position);
+    light.target = player;
+
+
+    const loader = new GLTFLoader();
+    loader.crossOrigin = true;
+    loader.load( tShirt, function ( data ) {
+      var whiteTsh = data.scene;
+      whiteTsh.position.set(3, 1, 4);
+      scene.add( whiteTsh );
+    });
+
     function animate() {
 
       const time = performance.now();
 
+      player.position.copy(camera.position);
+
       if ( controls.isLocked === true ) {
 
-        raycaster.ray.origin.copy( controls.getObject().position );
+        // raycaster.ray.origin.copy( controls.getObject().position );
 
-        //const intersections = raycaster.intersectObjects( objects, false );
+        raycaster.setFromCamera( mouse, camera );
 
-        //const onObject = intersections.length > 0;
+        // // calculate objects intersecting the picking ray
+        const intersects = raycaster.intersectObjects( scene.children );
+      
+  
 
         const delta = ( time - prevTime ) / 1000;
 
@@ -169,12 +212,6 @@ export default class App extends Component {
 
         if ( moveForward || moveBackward ) velocity.z -= direction.z * 40.0 * delta;
         if ( moveLeft || moveRight ) velocity.x -= direction.x * 40.0 * delta;
-
-        /*if ( onObject === true ) {
-
-          velocity.y = Math.max( 0, velocity.y );
-
-        }*/
 
         controls.moveRight( - velocity.x * delta );
         controls.moveForward( - velocity.z * delta );
