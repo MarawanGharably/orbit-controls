@@ -141,6 +141,19 @@ export default class App extends Component {
 
   componentDidMount(){
 
+    const cursor = document.createElement('div')
+    cursor.style.width = '10px'
+    cursor.style.height = '10px'
+    cursor.style.background = 'red'
+    cursor.style.position = 'absolute'
+    cursor.style.top = '0'
+    cursor.style.left = '0'
+    cursor.style.right = '0'
+    cursor.style.bottom = '0'
+    cursor.style.margin = 'auto'
+    cursor.style.zIndex= '99'
+    document.body.appendChild(cursor)
+
     const scene = new THREE.Scene();
     const canvas = document.getElementById('webgl');
     const renderer = new THREE.WebGLRenderer({
@@ -170,10 +183,14 @@ export default class App extends Component {
 
     const newStore = createStore();
     const player = createObject()
+    const obstacle = createObject();
     scene.add(newStore);
+    scene.add(obstacle);
     scene.add(player);
     player.position.copy(camera.position);
     light.target = player;
+
+    obstacle.position.y = 1;
 
 
     const loader = new GLTFLoader();
