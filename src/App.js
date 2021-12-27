@@ -67,6 +67,7 @@ let prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
 const mouse = new THREE.Vector2();
+const lastCamPos = new THREE.Vector3();
 
 const onKeyDown = function ( event ) {
 
@@ -227,11 +228,24 @@ export default class App extends Component {
         direction.x = Number( moveRight ) - Number( moveLeft );
         direction.normalize(); // this ensures consistent movements in all directions
 
-        if ( moveForward || moveBackward ) velocity.z -= direction.z * 40.0 * delta;
-        if ( moveLeft || moveRight ) velocity.x -= direction.x * 40.0 * delta;
+        if (moveForward || moveBackward){
+         
+            velocity.z -= direction.z * 40.0 * delta;
+            lastCamPos.copy(camera.position);
+        }
+        if (moveLeft || moveRight) {
+
+          velocity.x -= direction.x * 40.0 * delta;
+          lastCamPos.copy(camera.position);
+        }    
 
         controls.moveRight( - velocity.x * delta );
         controls.moveForward( - velocity.z * delta );
+
+        if ( camera.position.x < -9 || camera.position.x > 9 || camera.position.z < -9 || camera.position.z > 9 ){
+
+          camera.position.copy(lastCamPos);
+        }
 
         controls.getObject().position.y += ( velocity.y * delta ); // new behavior
 
