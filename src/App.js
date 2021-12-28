@@ -79,15 +79,17 @@ const createStore = () => {
 
 }
 
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
+var moveForward = false;
+var moveBackward = false;
+var moveLeft = false;
+var moveRight = false;
 
-let prevTime = performance.now();
+var prevTime = performance.now();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
+const raycaster = new THREE.Raycaster( );
 const mouse = new THREE.Vector2();
+var objectIntersected = false;
 const lastCamPos = new THREE.Vector3();
 
 const onKeyDown = function ( event ) {
@@ -194,7 +196,6 @@ export default class App extends Component {
     camera.position.y = 1.5;
 
     const controls = new PointerLockControls( camera, canvas );
-    const raycaster = new THREE.Raycaster( );
 
     canvas.addEventListener( 'click', function () {controls.lock();} );
     document.addEventListener( 'keydown', onKeyDown );
@@ -212,9 +213,9 @@ export default class App extends Component {
     const loader = new GLTFLoader();
     loader.crossOrigin = true;
     loader.load( t_Shirt, function ( data ) {
-      var tShirt = data.scene;
-      tShirt.position.set(3, 2, -9.2);
-      scene.add( tShirt );
+      window.tShirt = data.scene;
+      window.tShirt.position.set(3, 2, -9.2);
+      scene.add( window.tShirt );
     });
 
     function animate() {
@@ -228,9 +229,17 @@ export default class App extends Component {
         raycaster.setFromCamera( mouse, camera );
 
         // // calculate objects intersecting the picking ray
-        const intersects = raycaster.intersectObjects( scene.children );
-      
-  
+        const intersects = raycaster.intersectObjects( [sphere, window.tShirt] );
+
+        if ( intersects && intersects.length > 0) {
+          objectIntersected = true;
+        }
+
+        else{
+          objectIntersected = false;
+        }
+
+        console.log(objectIntersected);  
 
         const delta = ( time - prevTime ) / 1000;
 
