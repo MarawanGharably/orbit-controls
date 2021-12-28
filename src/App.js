@@ -1,12 +1,12 @@
 
 import React, { Component } from 'react'
 import * as THREE from 'three'
-import { PointerLockControls } from './PointerLockControls'
-import floorImage from './images/floor2.jpg'
-import wallImage from './images/wall.jpg'
-import tShirt from './images/moko2.glb'
-import './App.css';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { PointerLockControls } from './PointerLockControls'
+import floorImage from './static/floor2.jpg'
+import wallImage from './static/wall.jpeg'
+import t_Shirt from './static/moko2.glb'
+import './App.css';
 
 
 const createStore = () => {
@@ -30,29 +30,50 @@ const createStore = () => {
   floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
   floorTexture.repeat.set( 20, 20 );
   floorTexture.encoding = THREE.sRGBEncoding;
+
+  const shelfGeometry = new THREE.BoxGeometry(15, .1, 1 );
+  const shelfMaterial = new THREE.MeshStandardMaterial( { color : '#000' });
   
   const firstWall = new THREE.Mesh( wallGeometry, wallMaterial );
   firstWall.position.z = -10;
   firstWall.position.y = 2.5;
 
+  const firstShelf = new THREE.Mesh( shelfGeometry, shelfMaterial );
+  firstShelf.position.z = -9.5;
+  firstShelf.position.y = 1;
+
   const secondWall = new THREE.Mesh( wallGeometry, wallMaterial );
   secondWall.position.z = 10;
   secondWall.position.y = 2.5;
+
+  const secondShelf = new THREE.Mesh( shelfGeometry, shelfMaterial );
+  secondShelf.position.z = 9.5;
+  secondShelf.position.y = 1;
 
   const thirdWall = new THREE.Mesh( wallGeometry, wallMaterial );
   thirdWall.rotation.y = Math.PI / 2;
   thirdWall.position.x = 10;
   thirdWall.position.y = 2.5;
 
+  const thirdShelf = new THREE.Mesh( shelfGeometry, shelfMaterial );
+  thirdShelf.rotation.y = Math.PI / 2;
+  thirdShelf.position.x = 9.5;
+  thirdShelf.position.y = 1;
+
   const fourthWall = new THREE.Mesh( wallGeometry, wallMaterial );
   fourthWall.rotation.y = Math.PI / 2;
   fourthWall.position.x = -10;
   fourthWall.position.y = 2.5;
 
+  const fourthShelf = new THREE.Mesh( shelfGeometry, shelfMaterial );
+  fourthShelf.rotation.y = -Math.PI / 2;
+  fourthShelf.position.x = -9.5;
+  fourthShelf.position.y = 1;
+
   const floor = new THREE.Mesh( floorGeometry, floorMaterial );
   floor.rotation.x = Math.PI / 2;
 
-  newStore.add(firstWall, secondWall, thirdWall, fourthWall, floor);
+  newStore.add(firstWall, firstShelf, secondWall, secondShelf, thirdWall, thirdShelf, fourthWall, fourthShelf, floor);
 
   return newStore;
 
@@ -125,7 +146,7 @@ const onKeyUp = function ( event ) {
 
 const createObject = () => {
 
-  const geometry = new THREE.SphereGeometry(1, 32, 16);
+  const geometry = new THREE.SphereGeometry(.5, 32, 16);
   const material = new THREE.MeshNormalMaterial();
   const newObject = new THREE.Mesh(geometry, material);
   return newObject;
@@ -162,11 +183,10 @@ export default class App extends Component {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const light = new THREE.SpotLight( 'red', 1 );
-    light.angle = Math.PI / 6;
-    light.position.set(0, 5, 0);
+    const light = new THREE.SpotLight( 0xffffff, 0.8 );
+    light.angle = Math.PI / 3;
+    light.position.set(0, 10, 0);
     scene.add(light);
-    scene.add(light.target);
 
     scene.add( new THREE.AmbientLight( 0xffffff, 0.7 ));
 
@@ -183,30 +203,23 @@ export default class App extends Component {
     scene.add( controls.getObject() );
 
     const newStore = createStore();
-    const player = createObject()
-    const obstacle = createObject();
+    const sphere = createObject();
     scene.add(newStore);
-    scene.add(obstacle);
-    scene.add(player);
-    player.position.copy(camera.position);
-    light.target = player;
+    scene.add(sphere);
 
-    obstacle.position.y = 1;
-
+    sphere.position.set(-3, 1.55, -9.2);
 
     const loader = new GLTFLoader();
     loader.crossOrigin = true;
-    loader.load( tShirt, function ( data ) {
-      var whiteTsh = data.scene;
-      whiteTsh.position.set(3, 1, 4);
-      scene.add( whiteTsh );
+    loader.load( t_Shirt, function ( data ) {
+      var tShirt = data.scene;
+      tShirt.position.set(3, 2, -9.2);
+      scene.add( tShirt );
     });
 
     function animate() {
 
       const time = performance.now();
-
-      player.position.copy(camera.position);
 
       if ( controls.isLocked === true ) {
 
