@@ -1,8 +1,8 @@
 
 import React, { Component } from 'react'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { PointerLockControls } from './PointerLockControls'
 import floorImage from './static/floor2.jpg'
 import wallImage from './static/wall.jpeg'
 import t_Shirt from './static/moko2.glb'
@@ -79,72 +79,8 @@ const createStore = () => {
 
 }
 
-var moveForward = false;
-var moveBackward = false;
-var moveLeft = false;
-var moveRight = false;
-
-var prevTime = performance.now();
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
 const raycaster = new THREE.Raycaster( );
 const mouse = new THREE.Vector2();
-var objectIntersected = false;
-const lastCamPos = new THREE.Vector3();
-
-const onKeyDown = function ( event ) {
-
-  switch ( event.code ) {
-
-    case 'ArrowUp':
-    case 'KeyW':
-      moveForward = true;
-      break;
-
-    case 'ArrowLeft':
-    case 'KeyA':
-      moveLeft = true;
-      break;
-
-    case 'ArrowDown':
-    case 'KeyS':
-      moveBackward = true;
-      break;
-
-    case 'ArrowRight':
-    case 'KeyD':
-      moveRight = true;
-      break;
-
-  }
-};
-
-const onKeyUp = function ( event ) {
-
-  switch ( event.code ) {
-
-    case 'ArrowUp':
-    case 'KeyW':
-      moveForward = false;
-      break;
-
-    case 'ArrowLeft':
-    case 'KeyA':
-      moveLeft = false;
-      break;
-
-    case 'ArrowDown':
-    case 'KeyS':
-      moveBackward = false;
-      break;
-
-    case 'ArrowRight':
-    case 'KeyD':
-      moveRight = false;
-      break;
-
-  }
-};
 
 const createObject = () => {
 
@@ -165,19 +101,6 @@ export default class App extends Component {
 
   componentDidMount(){
 
-    const cursor = document.createElement('div')
-    cursor.style.width = '10px'
-    cursor.style.height = '10px'
-    cursor.style.background = 'red'
-    cursor.style.position = 'absolute'
-    cursor.style.top = '0'
-    cursor.style.left = '0'
-    cursor.style.right = '0'
-    cursor.style.bottom = '0'
-    cursor.style.margin = 'auto'
-    cursor.style.zIndex= '99'
-    document.body.appendChild(cursor)
-
     const scene = new THREE.Scene();
     const canvas = document.getElementById('webgl');
     const renderer = new THREE.WebGLRenderer({
@@ -193,15 +116,14 @@ export default class App extends Component {
     scene.add( new THREE.AmbientLight( 0xffffff, 0.7 ));
 
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.y = 1.5;
 
-    const controls = new PointerLockControls( camera, canvas );
-
-    canvas.addEventListener( 'click', function () {controls.lock();} );
-    document.addEventListener( 'keydown', onKeyDown );
-    document.addEventListener( 'keyup', onKeyUp );
-
-    scene.add( controls.getObject() );
+    const controls = new OrbitControls( camera, canvas );
+    controls.listenToKeyEvents( window );
+    controls.screenSpacePanning = false;
+    controls.minDistance = 5;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.update();
 
     const newStore = createStore();
     const sphere = createObject();
@@ -220,66 +142,18 @@ export default class App extends Component {
 
     function animate() {
 
-      const time = performance.now();
-
-      if ( controls.isLocked === true ) {
-
-        // raycaster.ray.origin.copy( controls.getObject().position );
-
         raycaster.setFromCamera( mouse, camera );
 
         // // calculate objects intersecting the picking ray
-        const intersects = raycaster.intersectObjects( [sphere, window.tShirt] );
+        // const intersects = raycaster.intersectObjects( [sphere, window.tShirt] );
 
-        if ( intersects && intersects.length > 0) {
-          objectIntersected = true;
-        }
+        // if ( intersects && intersects.length > 0) {
+        //   objectIntersected = true;
+        // }
 
-        else{
-          objectIntersected = false;
-        }
-
-        console.log(objectIntersected);  
-
-        const delta = ( time - prevTime ) / 1000;
-
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-
-        direction.z = Number( moveForward ) - Number( moveBackward );
-        direction.x = Number( moveRight ) - Number( moveLeft );
-        direction.normalize(); // this ensures consistent movements in all directions
-
-        if (moveForward || moveBackward){
-         
-            velocity.z -= direction.z * 40.0 * delta;
-            lastCamPos.copy(camera.position);
-        }
-        if (moveLeft || moveRight) {
-
-          velocity.x -= direction.x * 40.0 * delta;
-          lastCamPos.copy(camera.position);
-        }    
-
-        controls.moveRight( - velocity.x * delta );
-        controls.moveForward( - velocity.z * delta );
-
-        if ( camera.position.x < -9 || camera.position.x > 9 || camera.position.z < -9 || camera.position.z > 9 ){
-
-          camera.position.copy(lastCamPos);
-        }
-
-        controls.getObject().position.y += ( velocity.y * delta ); // new behavior
-
-        if ( controls.getObject().position.y < 1.5 ) {
-
-          velocity.y = 0;
-          controls.getObject().position.y = 1.5;
-
-        }
-      }
-
-      prevTime = time;
+        // else{
+        //   objectIntersected = false;
+        // }
 
       renderer.render( scene, camera );
 
